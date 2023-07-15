@@ -67,7 +67,7 @@ cleanup:
   if (device_fd > 0){
     close_device(device_fd);
   }
-  if (!raw_img_file){
+  if (raw_img_file){
     fclose(raw_img_file);
   }
   if (png_img_buf){
