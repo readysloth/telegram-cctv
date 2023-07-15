@@ -89,25 +89,16 @@ static int get_frame_from_device(int device_fd,
                                           .field = V4L2_FIELD_INTERLACED}}}
 
 
-int get_frame(FILE *frame_file,
-              int device_fd,
-              unsigned int *actual_width,
-              unsigned int *actual_height){
-  struct buffer buffers[BUFFERS_COUNT] = {0};
-  struct v4l2_format fmt = DEFAULT_V4L2_FMT;
-  struct v4l2_requestbuffers req = {.count = ARRAY_SIZE(buffers),
-                                    .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-                                    .memory = V4L2_MEMORY_MMAP};
-  struct v4l2_buffer buf = {.type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-                            .memory = V4L2_MEMORY_MMAP,
-                            .index = 0};
-
+void *device_setup(int device_fd,
+                   unsigned int *actual_width,
+                   unsigned int *actual_height){
+  static struct v4l2_format fmt = DEFAULT_V4L2_FMT;
 
   log_debug("xioctl(device_fd, VIDIOC_S_FMT, &fmt);");
   xioctl(device_fd, VIDIOC_S_FMT, &fmt);
   if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24){
     log_error("Libv4l didn't accept RGB24 format. Can't proceed.");
-    exit(EXIT_FAILURE);
+    return NULL;
   }
 
   *actual_width = fmt.fmt.pix.width;
@@ -121,6 +112,22 @@ int get_frame(FILE *frame_file,
              WIDTH,
              HEIGHT);
   }
+
+  return &fmt;
+}
+
+
+int get_frame(FILE *frame_file,
+              int device_fd,
+              void *fmt_ptr){
+  struct buffer buffers[BUFFERS_COUNT] = {0};
+  struct v4l2_requestbuffers req = {.count = ARRAY_SIZE(buffers),
+                                    .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+                                    .memory = V4L2_MEMORY_MMAP};
+  struct v4l2_buffer buf = {.type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+                            .memory = V4L2_MEMORY_MMAP,
+                            .index = 0};
+  struct v4l2_format fmt = *((struct v4l2_format*)fmt_ptr);
 
   log_debug("xioctl(device_fd, VIDIOC_REQBUFS, &req);");
   xioctl(device_fd, VIDIOC_REQBUFS, &req);
@@ -165,6 +172,5 @@ int get_frame(FILE *frame_file,
   for (int i = 0; i < req.count; i++) {
     v4l2_munmap(buffers[i].start, buffers[i].length);
   }
-  v4l2_close(device_fd);
   return 0;
 }

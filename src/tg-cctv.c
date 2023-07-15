@@ -24,6 +24,8 @@ int main(int argc, char *argv[]){
   size_t png_size = 0;
   uint8_t *png_img_buf = NULL;
 
+  void *fmt_info = NULL;
+
   char *video_device = argc < 2 ? "/dev/video0" : argv[1];
 
   log_set_level(LOG_INFO);
@@ -34,12 +36,17 @@ int main(int argc, char *argv[]){
     goto error;
   }
 
+  fmt_info = device_setup(device_fd, &actual_width, &actual_height);
+  if (!fmt_info){
+    goto error;
+  }
+
   raw_img_file = fmemopen(RAW_IMAGE_BUFFER, sizeof(RAW_IMAGE_BUFFER), "wb");
   if (!raw_img_file){
     goto error;
   }
 
-  get_frame(raw_img_file, device_fd, &actual_width, &actual_height);
+  get_frame(raw_img_file, device_fd, fmt_info);
 
   unsigned int err = lodepng_encode24(&png_img_buf,
                                       &png_size,

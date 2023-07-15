@@ -12,7 +12,9 @@ struct buffer {
 
 int open_device(char *device);
 int close_device(int fd);
+void *device_setup(int device_setup,
+                   unsigned int *actual_width,
+                   unsigned int *actual_height);
 int get_frame(FILE *frame_file,
               int device_fd,
-              unsigned int *actual_width,
-              unsigned int *actual_height);
+              void *fmt_ptr);
