@@ -43,6 +43,11 @@ int open_device(char *device){
 }
 
 
+int close_device(int fd){
+  return v4l2_close(fd);
+}
+
+
 static int get_frame_from_device(int device_fd,
                                  struct buffer *buffers,
                                  struct v4l2_buffer buf,
