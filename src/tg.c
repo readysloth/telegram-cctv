@@ -8,7 +8,7 @@
 #include "log.h"
 
 
-CURLcode upload_file(uint8_t *buffer, size_t size, char *url){
+CURLcode upload_buffer(uint8_t *buffer, size_t size, char *url){
   CURL *curl = NULL;
   CURLcode res = CURLE_OK;
   curl_mime *mime = NULL;

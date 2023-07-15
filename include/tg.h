@@ -15,4 +15,4 @@
 #define TG_BOT_SEND_PHOTO_ENDPOINT TG_BOT_ENDPOINT "/sendPhoto?chat_id=" TG_CHANNEL
 
 
-CURLcode upload_file(uint8_t *buffer, size_t size, char *url);
+CURLcode upload_buffer(uint8_t *buffer, size_t size, char *url);

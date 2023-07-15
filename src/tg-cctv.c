@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
       continue;
     }
 
-    upload_file(png_img_buf, png_size, TG_BOT_SEND_PHOTO_ENDPOINT);
+    upload_buffer(png_img_buf, png_size, TG_BOT_SEND_PHOTO_ENDPOINT);
     sleep(5*60);
   }
 
