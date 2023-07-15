@@ -9,7 +9,7 @@
 #include "log.h"
 
 
-int upload_file(FILE *file, char *url){
+CURLcode upload_file(FILE *file, char *url){
   CURL *curl;
   CURLcode res = CURLE_OK;
   struct stat file_info;
