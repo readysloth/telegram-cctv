@@ -46,18 +46,22 @@ int main(int argc, char *argv[]){
     goto error;
   }
 
-  get_frame(raw_img_file, device_fd, fmt_info);
+  while(true) {
+    get_frame(raw_img_file, device_fd, fmt_info);
 
-  unsigned int err = lodepng_encode24(&png_img_buf,
-                                      &png_size,
-                                      RAW_IMAGE_BUFFER,
-                                      actual_width,
-                                      actual_height);
-  if (err){
-    log_error(lodepng_error_text(err));
+    unsigned int err = lodepng_encode24(&png_img_buf,
+                                        &png_size,
+                                        RAW_IMAGE_BUFFER,
+                                        actual_width,
+                                        actual_height);
+    if (err){
+      log_error(lodepng_error_text(err));
+      continue;
+    }
+
+    upload_file(png_img_buf, png_size, TG_BOT_SEND_PHOTO_ENDPOINT);
+    sleep(5*60);
   }
-
-  upload_file(png_img_buf, png_size, TG_BOT_SEND_PHOTO_ENDPOINT);
 
   goto cleanup;
 
