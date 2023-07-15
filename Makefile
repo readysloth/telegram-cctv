@@ -1,14 +1,14 @@
 .PHONY: clean, mrproper
 CC = gcc
 CFLAGS = -g -Wall -I include
-LDFLAGS = -lcurl
+LDFLAGS = -lcurl -lv4l2
 
 all: tg-cctv
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-tg-cctv: src/log.c src/tg.c src/tg-cctv.c
+tg-cctv: src/log.c src/tg.c src/tg-cctv.c src/cam.c src/lodepng.c
 	$(CC) $(CFLAGS) -o $@ $+ $(LDFLAGS)
 
 help: ## Prints help for targets with comments
