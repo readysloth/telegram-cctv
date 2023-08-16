@@ -1,7 +1,8 @@
 .PHONY: clean, mrproper
-CC = gcc
-LDFLAGS = -lcurl -lv4l2
+
+CC ?= gcc
 override CFLAGS += -g -Wall -I include
+override LDFLAGS += -lcurl -lv4l2
 
 all: tg-cctv
 
