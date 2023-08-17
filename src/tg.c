@@ -32,7 +32,8 @@ CURLcode upload_buffer(uint8_t *buffer, size_t size, char *url){
 
   res = curl_easy_perform(curl);
   if(res != CURLE_OK) {
-    log_error("curl_easy_perform() failed with [%s] on url %s\n",
+    log_error("curl_easy_perform() failed with [0x%X:%s] on url %s\n",
+              res,
               curl_easy_strerror(res),
               url);
   }
