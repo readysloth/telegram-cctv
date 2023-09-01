@@ -60,7 +60,8 @@ int main(int argc, char *argv[]){
     }
 
     upload_buffer(png_img_buf, png_size, TG_BOT_SEND_PHOTO_ENDPOINT);
-    sleep(5*60);
+    rewind(raw_img_file);
+    sleep(2*60);
   }
 
   goto cleanup;
