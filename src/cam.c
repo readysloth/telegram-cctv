@@ -70,13 +70,14 @@ static int get_frame_from_device(int device_fd,
   } while ((ret == -1 && (errno = EINTR)));
   if (ret == -1) {
     log_error("%d, %s", errno, strerror(errno));
-    return errno;
+    return -1;
   }
 
   xioctl(device_fd, VIDIOC_DQBUF, &buf);
+  int size = buf.bytesused;
   fwrite(buffers[buf.index].start, buf.bytesused, 1, output_file);
   xioctl(device_fd, VIDIOC_QBUF, &buf);
-  return 0;
+  return size;
 }
 
 
@@ -84,9 +85,9 @@ static int get_frame_from_device(int device_fd,
 
 #define DEFAULT_V4L2_FMT {.type = V4L2_BUF_TYPE_VIDEO_CAPTURE, \
                           .fmt = { .pix = {.width = WIDTH, \
-                                          .height = HEIGHT, \
-                                          .pixelformat = V4L2_PIX_FMT_RGB24,\
-                                          .field = V4L2_FIELD_INTERLACED}}}
+                                           .height = HEIGHT, \
+                                           .pixelformat = V4L2_PIX_FMT_MJPEG,\
+                                           .field = V4L2_FIELD_INTERLACED_TB}}}
 
 
 void *device_setup(int device_fd,
@@ -96,8 +97,8 @@ void *device_setup(int device_fd,
 
   log_debug("xioctl(device_fd, VIDIOC_S_FMT, &fmt);");
   xioctl(device_fd, VIDIOC_S_FMT, &fmt);
-  if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24){
-    log_error("Libv4l didn't accept RGB24 format. Can't proceed.");
+  if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_MJPEG){
+    log_error("Libv4l didn't accept MJPEG format. Can't proceed.");
     return NULL;
   }
 
@@ -157,20 +158,17 @@ int get_frame(FILE *frame_file,
     xioctl(device_fd, VIDIOC_QBUF, &buf);
   }
 
-  enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  xioctl(device_fd, VIDIOC_STREAMON, &type);
+  xioctl(device_fd, VIDIOC_STREAMON, &req.type);
 
-  get_frame_from_device(device_fd,
-                        buffers,
-                        buf,
-                        fmt,
-                        frame_file);
-
-  type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  int size = get_frame_from_device(device_fd,
+                                   buffers,
+                                   buf,
+                                   fmt,
+                                   frame_file);
   log_debug("xioctl(device_fd, VIDIOC_STREAMOFF, &type);");
-  xioctl(device_fd, VIDIOC_STREAMOFF, &type);
+  xioctl(device_fd, VIDIOC_STREAMOFF, &req.type);
   for (int i = 0; i < req.count; i++) {
     v4l2_munmap(buffers[i].start, buffers[i].length);
   }
-  return 0;
+  return size;
 }

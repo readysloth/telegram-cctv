@@ -23,8 +23,8 @@ CURLcode upload_buffer(uint8_t *buffer, size_t size, char *url){
   part = curl_mime_addpart(mime);
 
   curl_mime_name(part, "photo");
-  curl_mime_type(part, "image/png");
-  curl_mime_filename(part, "image.png");
+  curl_mime_type(part, "image/jpeg");
+  curl_mime_filename(part, "image.jpg");
   curl_mime_data(part, buffer, size);
 
   curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);

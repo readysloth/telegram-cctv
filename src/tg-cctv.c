@@ -8,8 +8,6 @@
 #include "cam.h"
 #include "log.h"
 
-#include "lodepng.h"
-
 #define IMAGE_BUFFER_SIZE WIDTH*HEIGHT*3
 
 #define USB_HUB_DEFAULT "1-1"
@@ -63,7 +61,6 @@ int main(int argc, char *argv[]){
   FILE *raw_img_file = NULL;
 
   size_t png_size = 0;
-  uint8_t *png_img_buf = NULL;
   struct device_info info = {0};
   char *video_device = argc < 2 ? "/dev/video0" : argv[1];
   bool disable_usb = argc < 3 ? false : !strcmp(argv[2], "disable_usb");;
@@ -89,19 +86,8 @@ int main(int argc, char *argv[]){
       }
     }
 
-    get_frame(raw_img_file, info.fd, info.fmt);
-
-    unsigned int err = lodepng_encode24(&png_img_buf,
-                                        &png_size,
-                                        RAW_IMAGE_BUFFER,
-                                        actual_width,
-                                        actual_height);
-    if (err){
-      log_error(lodepng_error_text(err));
-      continue;
-    }
-
-    upload_buffer(png_img_buf, png_size, TG_BOT_SEND_PHOTO_ENDPOINT);
+    int size = get_frame(raw_img_file, info.fd, info.fmt);
+    upload_buffer(RAW_IMAGE_BUFFER, size, TG_BOT_SEND_PHOTO_ENDPOINT);
     rewind(raw_img_file);
     if (disable_usb){
       log_info("Disabling USB's");
@@ -128,9 +114,6 @@ cleanup:
   }
   if (raw_img_file){
     fclose(raw_img_file);
-  }
-  if (png_img_buf){
-    free(png_img_buf);
   }
   return ret;
 }

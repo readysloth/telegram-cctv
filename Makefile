@@ -9,7 +9,7 @@ all: tg-cctv
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-tg-cctv: src/log.c src/tg.c src/tg-cctv.c src/cam.c src/lodepng.c
+tg-cctv: src/log.c src/tg.c src/tg-cctv.c src/cam.c
 	$(CC) $(CFLAGS) -o $@ $+ $(LDFLAGS)
 
 help: ## Prints help for targets with comments
