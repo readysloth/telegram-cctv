@@ -79,6 +79,7 @@ int main(int argc, char *argv[]){
 
   while(true){
     if (info.fd == 0){
+      log_info("Preparing video device");
       info = prepare_video_device(video_device,
                                   &actual_width,
                                   &actual_height);
@@ -103,6 +104,7 @@ int main(int argc, char *argv[]){
     upload_buffer(png_img_buf, png_size, TG_BOT_SEND_PHOTO_ENDPOINT);
     rewind(raw_img_file);
     if (disable_usb){
+      log_info("Disabling USB's");
       close_device(info.fd);
       info.fd = 0;
       info.fmt = NULL;
@@ -110,6 +112,7 @@ int main(int argc, char *argv[]){
     }
     sleep(3*60);
     if (disable_usb){
+      log_info("Enabling USB's back");
       system("echo " USB_HUB " > /sys/bus/usb/drivers/usb/bind");
       sleep(5);
     }
