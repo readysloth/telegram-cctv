@@ -13,6 +13,8 @@
 #include "log.h"
 #include "cam.h"
 
+#define MIN(a,b) (((a)<(b))?(a):(b))
+
 
 static void xioctl(int fh, int request, void *arg){
   int r;
@@ -52,7 +54,8 @@ static int get_frame_from_device(int device_fd,
                                  struct buffer *buffers,
                                  struct v4l2_buffer buf,
                                  struct v4l2_format fmt,
-                                 FILE *output_file){
+                                 uint8_t *output_buffer,
+                                 size_t output_buffer_size){
   fd_set fds;
   struct timeval tv;
 
@@ -75,13 +78,15 @@ static int get_frame_from_device(int device_fd,
 
   xioctl(device_fd, VIDIOC_DQBUF, &buf);
   int size = buf.bytesused;
-  fwrite(buffers[buf.index].start, buf.bytesused, 1, output_file);
+  memcpy(output_buffer,
+         buffers[buf.index].start,
+         MIN(buf.bytesused, output_buffer_size));
   xioctl(device_fd, VIDIOC_QBUF, &buf);
   return size;
 }
 
 
-#define BUFFERS_COUNT 2
+#define BUFFERS_COUNT 1
 
 #define DEFAULT_V4L2_FMT {.type = V4L2_BUF_TYPE_VIDEO_CAPTURE, \
                           .fmt = { .pix = {.width = WIDTH, \
@@ -118,9 +123,10 @@ void *device_setup(int device_fd,
 }
 
 
-int get_frame(FILE *frame_file,
-              int device_fd,
-              void *fmt_ptr){
+int get_frame(int device_fd,
+              void *fmt_ptr,
+              uint8_t *output_buffer,
+              size_t output_buffer_size){
   struct buffer buffers[BUFFERS_COUNT] = {0};
   struct v4l2_requestbuffers req = {.count = ARRAY_SIZE(buffers),
                                     .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
@@ -142,7 +148,7 @@ int get_frame(FILE *frame_file,
     buffers[i].length = buf.length;
     buffers[i].start = v4l2_mmap(NULL,
                                  buf.length,
-                                 PROT_READ | PROT_WRITE,
+                                 PROT_READ,
                                  MAP_SHARED,
                                  device_fd,
                                  buf.m.offset);
@@ -164,7 +170,8 @@ int get_frame(FILE *frame_file,
                                    buffers,
                                    buf,
                                    fmt,
-                                   frame_file);
+                                   output_buffer,
+                                   output_buffer_size);
   log_debug("xioctl(device_fd, VIDIOC_STREAMOFF, &type);");
   xioctl(device_fd, VIDIOC_STREAMOFF, &req.type);
   for (int i = 0; i < req.count; i++) {

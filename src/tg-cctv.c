@@ -58,7 +58,6 @@ int main(int argc, char *argv[]){
   int ret = 0;
   unsigned int actual_width = 0;
   unsigned int actual_height = 0;
-  FILE *raw_img_file = NULL;
 
   size_t png_size = 0;
   struct device_info info = {0};
@@ -68,11 +67,6 @@ int main(int argc, char *argv[]){
   log_set_level(LOG_INFO);
   log_info("Started");
   log_info(disable_usb ? "ALL USB devices will be disabled in every iteration" : "As usual");
-
-  raw_img_file = fmemopen(RAW_IMAGE_BUFFER, sizeof(RAW_IMAGE_BUFFER), "wb");
-  if (!raw_img_file){
-    goto error;
-  }
 
   while(true){
     if (info.fd == 0){
@@ -86,9 +80,11 @@ int main(int argc, char *argv[]){
       }
     }
 
-    int size = get_frame(raw_img_file, info.fd, info.fmt);
-    upload_buffer(RAW_IMAGE_BUFFER, size, TG_BOT_SEND_PHOTO_ENDPOINT);
-    rewind(raw_img_file);
+    int actual_size = get_frame(info.fd,
+                                info.fmt,
+                                RAW_IMAGE_BUFFER,
+                                IMAGE_BUFFER_SIZE);
+    upload_buffer(RAW_IMAGE_BUFFER, actual_size, TG_BOT_SEND_PHOTO_ENDPOINT);
     if (disable_usb){
       log_info("Disabling USB's");
       close_device(info.fd);
@@ -111,9 +107,6 @@ error:
 cleanup:
   if (info.fd > 0){
     close_device(info.fd);
-  }
-  if (raw_img_file){
-    fclose(raw_img_file);
   }
   return ret;
 }
