@@ -14,6 +14,13 @@
 #include "cam.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
+#define BUFFERS_COUNT 1
+#define DEFAULT_V4L2_FMT {.type = V4L2_BUF_TYPE_VIDEO_CAPTURE, \
+                          .fmt = { .pix = {.width = WIDTH, \
+                                           .height = HEIGHT, \
+                                           .pixelformat = V4L2_PIX_FMT_MJPEG,\
+                                           .field = V4L2_FIELD_INTERLACED_TB}}}
+
 
 
 static void xioctl(int fh, int request, void *arg){
@@ -84,15 +91,6 @@ static int get_frame_from_device(int device_fd,
   xioctl(device_fd, VIDIOC_QBUF, &buf);
   return size;
 }
-
-
-#define BUFFERS_COUNT 1
-
-#define DEFAULT_V4L2_FMT {.type = V4L2_BUF_TYPE_VIDEO_CAPTURE, \
-                          .fmt = { .pix = {.width = WIDTH, \
-                                           .height = HEIGHT, \
-                                           .pixelformat = V4L2_PIX_FMT_MJPEG,\
-                                           .field = V4L2_FIELD_INTERLACED_TB}}}
 
 
 void *device_setup(int device_fd,
@@ -166,12 +164,15 @@ int get_frame(int device_fd,
 
   xioctl(device_fd, VIDIOC_STREAMON, &req.type);
 
-  int size = get_frame_from_device(device_fd,
-                                   buffers,
-                                   buf,
-                                   fmt,
-                                   output_buffer,
-                                   output_buffer_size);
+  int size = 0;
+  // Allow cam to adjust the brightness
+  for (int i = 0; i < 10; i++)
+    size = get_frame_from_device(device_fd,
+                                 buffers,
+                                 buf,
+                                 fmt,
+                                 output_buffer,
+                                 output_buffer_size);
   log_debug("xioctl(device_fd, VIDIOC_STREAMOFF, &type);");
   xioctl(device_fd, VIDIOC_STREAMOFF, &req.type);
   for (int i = 0; i < req.count; i++) {
