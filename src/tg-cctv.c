@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
   char *video_device = argc < 2 ? "/dev/video0" : argv[1];
   bool disable_usb = argc < 3 ? false : !strcmp(argv[2], "disable_usb");;
 
-  log_set_level(LOG_INFO);
+  log_set_level(LOG_DEBUG);
   log_info("Started");
   log_info(disable_usb ? "ALL USB devices will be disabled in every iteration" : "As usual");
 

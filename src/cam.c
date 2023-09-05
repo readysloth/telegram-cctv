@@ -22,8 +22,8 @@
                                            .field = V4L2_FIELD_INTERLACED_TB}}}
 
 
-static void xioctl(int fh, int request, void *arg){
-  int r;
+static int xioctl(int fh, int request, void *arg){
+  int r = 0;
 
   do {
     r = v4l2_ioctl(fh, request, arg);
@@ -31,8 +31,8 @@ static void xioctl(int fh, int request, void *arg){
 
   if (r == -1) {
     log_error("%d, %s", errno, strerror(errno));
-    exit(EXIT_FAILURE);
   }
+  return r;
 }
 
 
@@ -82,12 +82,14 @@ static int get_frame_from_device(int device_fd,
     return -1;
   }
 
-  xioctl(device_fd, VIDIOC_DQBUF, &buf);
+  ret = xioctl(device_fd, VIDIOC_DQBUF, &buf);
+  log_debug("xioctl(device_fd, VIDIOC_DQBUF, &buf) = %i", ret);
   int size = buf.bytesused;
   memcpy(output_buffer,
          buffers[buf.index].start,
          MIN(buf.bytesused, output_buffer_size));
-  xioctl(device_fd, VIDIOC_QBUF, &buf);
+  ret = xioctl(device_fd, VIDIOC_QBUF, &buf);
+  log_debug("xioctl(device_fd, VIDIOC_QBUF, &buf) = %i", ret);
   return size;
 }
 
@@ -96,9 +98,10 @@ void *device_setup(int device_fd,
                    unsigned int *actual_width,
                    unsigned int *actual_height){
   static struct v4l2_format fmt = DEFAULT_V4L2_FMT;
+  int ret = 0;
 
-  log_debug("xioctl(device_fd, VIDIOC_S_FMT, &fmt);");
-  xioctl(device_fd, VIDIOC_S_FMT, &fmt);
+  ret = xioctl(device_fd, VIDIOC_S_FMT, &fmt);
+  log_debug("xioctl(device_fd, VIDIOC_S_FMT, &fmt) = %i", ret);
   if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_MJPEG){
     log_error("Libv4l didn't accept MJPEG format. Can't proceed.");
     return NULL;
@@ -133,14 +136,16 @@ int get_frame(int device_fd,
                             .index = 0};
   struct v4l2_format fmt = *((struct v4l2_format*)fmt_ptr);
 
-  log_debug("xioctl(device_fd, VIDIOC_REQBUFS, &req);");
-  xioctl(device_fd, VIDIOC_REQBUFS, &req);
+  int ret = 0;
+
+  ret = xioctl(device_fd, VIDIOC_REQBUFS, &req);
+  log_debug("xioctl(device_fd, VIDIOC_REQBUFS, &req) = %i", ret);
 
   for (int i = 0; i < req.count; i++) {
     buf.index = i;
 
-    log_debug("xioctl(device_fd, VIDIOC_QUERYBUF, &buf);");
-    xioctl(device_fd, VIDIOC_QUERYBUF, &buf);
+    ret = xioctl(device_fd, VIDIOC_QUERYBUF, &buf);
+    log_debug("xioctl(device_fd, VIDIOC_QUERYBUF, &buf) = %i", ret);
 
     buffers[i].length = buf.length;
     buffers[i].start = v4l2_mmap(NULL,
@@ -157,11 +162,12 @@ int get_frame(int device_fd,
 
   for (int i = 0; i < req.count; i++) {
     buf.index = i;
-    log_debug("xioctl(device_fd, VIDIOC_QBUF, &buf);");
-    xioctl(device_fd, VIDIOC_QBUF, &buf);
+    ret = xioctl(device_fd, VIDIOC_QBUF, &buf);
+    log_debug("xioctl(device_fd, VIDIOC_QBUF, &buf) = %i", ret);
   }
 
   xioctl(device_fd, VIDIOC_STREAMON, &req.type);
+  log_debug("xioctl(device_fd, VIDIOC_STREAMON, &req.type) = %i", ret);
 
   int size = 0;
   // Allow cam to adjust the brightness
@@ -172,8 +178,8 @@ int get_frame(int device_fd,
                                  fmt,
                                  output_buffer,
                                  output_buffer_size);
-  log_debug("xioctl(device_fd, VIDIOC_STREAMOFF, &type);");
-  xioctl(device_fd, VIDIOC_STREAMOFF, &req.type);
+  ret = xioctl(device_fd, VIDIOC_STREAMOFF, &req.type);
+  log_debug("xioctl(device_fd, VIDIOC_STREAMOFF, &type) = %i", ret);
   for (int i = 0; i < req.count; i++) {
     v4l2_munmap(buffers[i].start, buffers[i].length);
   }
