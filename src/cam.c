@@ -37,7 +37,7 @@ static int xioctl(int fh, int request, void *arg){
 
 
 int open_device(char *device){
-  static int fd = -1;
+  int fd = -1;
 
   if (fd != -1) {
     return fd;
