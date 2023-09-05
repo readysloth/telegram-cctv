@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <errno.h>
 
 #include <unistd.h>
 
@@ -90,13 +91,18 @@ int main(int argc, char *argv[]){
       close_device(info.fd);
       info.fd = 0;
       info.fmt = NULL;
-      system("echo " USB_HUB " > /sys/bus/usb/drivers/usb/unbind");
+      ret = system("echo " USB_HUB " > /sys/bus/usb/drivers/usb/unbind");
+      if (ret != 0) {
+        log_error("%d, %s", errno, strerror(errno));
+      }
     }
     sleep(3*60);
     if (disable_usb){
       log_info("Enabling USB's back");
-      system("echo " USB_HUB " > /sys/bus/usb/drivers/usb/bind");
-      sleep(5);
+      ret = system("echo " USB_HUB " > /sys/bus/usb/drivers/usb/bind");
+      if (ret != 0) {
+        log_error("%d, %s", errno, strerror(errno));
+      }
     }
   }
 

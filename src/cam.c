@@ -22,7 +22,6 @@
                                            .field = V4L2_FIELD_INTERLACED_TB}}}
 
 
-
 static void xioctl(int fh, int request, void *arg){
   int r;
 
