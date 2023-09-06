@@ -103,6 +103,7 @@ int main(int argc, char *argv[]){
       if (ret != 0) {
         log_error("%d, %s", errno, strerror(errno));
       }
+      sleep(10);
     }
   }
 
