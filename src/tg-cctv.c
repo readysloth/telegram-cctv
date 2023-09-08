@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include <errno.h>
 
 #include <unistd.h>
@@ -64,10 +65,14 @@ int main(int argc, char *argv[]){
   struct device_info info = {0};
   char *video_device = argc < 2 ? "/dev/video0" : argv[1];
   bool disable_usb = argc < 3 ? false : !strcmp(argv[2], "disable_usb");;
+  bool longer_at_night = argc < 4 ? false : !strcmp(argv[3], "longer_at_night");;
+
+  int sleep_multiplier = longer_at_night ? 3 : 1;
 
   log_set_level(LOG_INFO);
   log_info("Started");
   log_info(disable_usb ? "ALL USB devices will be disabled in every iteration" : "As usual");
+  log_info(longer_at_night ? "With longer pauses at night time" : "As usual");
 
   while(true){
     if (info.fd == 0){
@@ -96,7 +101,16 @@ int main(int argc, char *argv[]){
         log_error("%d, %s", errno, strerror(errno));
       }
     }
-    sleep(3*60);
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    if (tm.tm_hour > 6 && tm.tm_hour < 22) {
+      sleep(3*60);
+    }
+    else {
+      sleep(3*60*sleep_multiplier);
+    }
+
     if (disable_usb){
       log_info("Enabling USB's back");
       ret = system("echo " USB_HUB " > /sys/bus/usb/drivers/usb/bind");
